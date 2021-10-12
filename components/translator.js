@@ -18,11 +18,11 @@ class Translator {
     }
     if (typeof dictionaries == 'object') {
       const dictionary = dictionaries;
-      const invertedDictionary = dictionary.reduce((object, key) => {
-        object[dictionary[key]] = key;
-        return object;
+      const invertedDictionary = Object.keys(dictionary).reduce((obj, key) => {
+        obj[dictionary[key]] = key;
+        return obj;
       }, {});
-      return invertDictionary;
+      return invertedDictionary;
     }
     return {};
   }
@@ -31,42 +31,45 @@ class Translator {
 
     const translateWords = (words, dictionaries) => {
       let wordsArr = words.slice();
+      let match;
 
       for (let numWords = wordsArr.length; numWords > 0; numWords--) {
         for (let start = 0;;) {
           for (const dictionary of dictionaries) {
-
-            const phrase = wordsArr.slice(start, numWords).join('');
-
-            if (dictionary[phrase]) {
+            const phrase = wordsArr.slice(start, start + numWords).join(' ');
+            if ((match = dictionary[phrase]) !== undefined) {
               wordsArr = wordsArr
                 .slice(0, start)
-                .concat(dictionary[phrase].split(''))
+                .concat([match])
                 .concat(wordsArr.slice(start + numWords))
-              start += numWords;
-            } else {
-              start++;
+              break ;
             }
+          }
 
-            if (start <= wordsArr.length - numWords) {
-              break;
-            }
+          if (match) {
+            start += numWords;
+          } else {
+            start++;
+          }
+
+          if (start > wordsArr.length - numWords) {
+            break;
           }
         }
       }
-      
+
       return wordsArr;
     }
 
     let dictionaries = null;
 
-    if (locale == 'American to British') {
+    if (locale == 'american-to-british') {
       dictionaries = [
         americanToBritishSpelling,
         americanToBritishTitles,
         americanOnly
       ]
-    } else if (locale == 'British to American') {
+    } else if (locale == 'british-to-american') {
       dictionaries = [
         this.invertDictionary(americanToBritishSpelling),
         this.invertDictionary(americanToBritishTitles),
@@ -78,10 +81,10 @@ class Translator {
       throw new Error('Invalid locale');
     }
 
-    const words = wordString.split('');
-    const translatedWords = this.translateWords(words, dictionaries);
+    const words = wordString.split(' ');
+    const translatedWords = translateWords(words, dictionaries);
 
-    return translatedWords.join('');
+    return translatedWords.join(' ');
   }
 }
 
