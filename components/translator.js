@@ -1,90 +1,124 @@
-const americanOnly = require('./american-only.js');
-const americanToBritishSpelling = require('./american-to-british-spelling.js');
-const americanToBritishTitles = require("./american-to-british-titles.js")
-const britishOnly = require('./british-only.js')
+const localeDictionaryData = require('./localeDictionaryData');
 
 class Translator {
 
-  invertDictionary(dictionaries) {
-    if (dictionaries == null) {
+  invertDictionary(dictionary) {
+    if (dictionary == null) {
       return null;
     }
-    if (Array.isArray(dictionaries)) {
-      let invertedDictionaries = [];
-      for (const dictionary of dictionaries) {
-        invertedDictionaries.push(invertDictionary(dictionary))
-      }
-      return invertedDictionaries;
-    }
-    if (typeof dictionaries == 'object') {
-      const dictionary = dictionaries;
-      const invertedDictionary = Object.keys(dictionary).reduce((obj, key) => {
+    if (typeof dictionary == 'object') {
+      return Object.keys(dictionary).reduce((obj, key) => {
         obj[dictionary[key]] = key;
         return obj;
       }, {});
-      return invertedDictionary;
     }
     return {};
   }
 
+  matchLocaleOnly(wordString, dictionary) {
+    let phrase = wordString.slice();
+    let dotInTheEnd = false;
+    let match;
+
+    if (phrase.match(/[.]$/g)) {
+      phrase = phrase.slice(0, phrase.length - 1);
+      dotInTheEnd = true;
+    }
+    if ((match = dictionary[phrase]) !== undefined) {
+      if (dotInTheEnd) {
+        match = match + '.';
+      }
+    }
+    return match;
+  }
+
+  matchSpelling(wordString, dictionary) {
+    let phrase = wordString.slice();
+    let dotInTheEnd = false;
+    let match;
+
+    if (phrase.match(/[.]$/g)) {
+      phrase = phrase.slice(0, phrase.length - 1);
+      dotInTheEnd = true;
+    }
+    if ((match = dictionary[phrase]) !== undefined) {
+      if (dotInTheEnd) {
+        match = match + '.';
+      }
+    }
+    return match;
+  }
+
+  matchTitle(wordString, dictionary) {
+    let match = dictionary[wordString];
+
+    if (match) {
+      return match;
+    } else if (wordString.match(/[.]$/g)) {
+      let word = wordString.slice(0, wordString.length - 1);
+      if ((match = dictionary[word]) != undefined) {
+        return match + '.';
+      }
+    };
+    return match;
+  }
+
   translate(wordString, locale) {
 
-    const translateWords = (words, dictionaries) => {
-      let wordsArr = words.slice();
-      let match;
+    let words = wordString.split(' ');
+    let dictionaryData = localeDictionaryData[locale];
 
-      for (let numWords = wordsArr.length; numWords > 0; numWords--) {
-        for (let start = 0;;) {
-          for (const dictionary of dictionaries) {
-            const phrase = wordsArr.slice(start, start + numWords).join(' ');
-            if ((match = dictionary[phrase]) !== undefined) {
-              wordsArr = wordsArr
-                .slice(0, start)
-                .concat([match])
-                .concat(wordsArr.slice(start + numWords))
-              break ;
-            }
-          }
-
-          if (match) {
-            start += numWords;
-          } else {
-            start++;
-          }
-
-          if (start > wordsArr.length - numWords) {
-            break;
-          }
-        }
-      }
-
-      return wordsArr;
-    }
-
-    let dictionaries = null;
-
-    if (locale == 'american-to-british') {
-      dictionaries = [
-        americanToBritishSpelling,
-        americanToBritishTitles,
-        americanOnly
-      ]
-    } else if (locale == 'british-to-american') {
-      dictionaries = [
-        this.invertDictionary(americanToBritishSpelling),
-        this.invertDictionary(americanToBritishTitles),
-        britishOnly
-      ]
-    }
-
-    if (!dictionaries) {
+    if (!dictionaryData) {
       throw new Error('Invalid locale');
     }
 
-    const words = wordString.split(' ');
-    const translatedWords = translateWords(words, dictionaries);
+    const matchFunc = {
+      localeOnly: this.matchLocaleOnly,
+      spelling: this.matchSpelling,
+      titles: this.matchTitle
+    };
 
-    return translatedWords.join(' ');
+    let translatedWords = [];
+
+    for (let numWords = words.length; numWords > 0; numWords--) {
+      let match = undefined;
+      let start = 0;
+
+      while (true) {
+        for (const type in dictionaryData) {
+
+          const phrase = words
+            .slice(start, start + numWords)
+            .join(' ')
+            .toLowerCase();
+
+          let findMatch = matchFunc[type];
+          let dictionary = dictionaryData[type].dictionary;
+          let options = dictionaryData[type].options;
+
+          if (options.inverted) {
+            dictionary = this.invertDictionary(dictionary);
+          }
+          if ((match = findMatch(phrase, dictionary)) !== undefined) {
+            translatedWords.push(match);
+            words = words
+              .slice(0, start)
+              .concat([match])
+              .concat(words.slice(start + numWords))
+            break ;
+          }
+        }
+        start = (match) ? (start + numWords) : (++start);
+        if (start > words.length - numWords) {
+          break;
+        }
+      }
+    };
+
+    return {
+      text: words.join(' '),
+      translatedWords: translatedWords
+    };
   }
 }
 
