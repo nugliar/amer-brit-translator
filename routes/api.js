@@ -44,6 +44,14 @@ module.exports = function (app) {
           .join(' ');
       }
 
+
+      console.log({
+        locale: locale,
+        text: text,
+        translation: translation.text,
+        formatted: formattedText
+      });
+
       res.json({
         text: translation.text,
         translation: formattedText
