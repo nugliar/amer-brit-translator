@@ -17,16 +17,16 @@ class Translator {
 
   matchLocaleOnly(wordString, dictionary) {
     let phrase = wordString.slice();
-    let dotInTheEnd = false;
+    let specialInTheEnd;
     let match;
 
-    if (phrase.match(/[.]$/g)) {
+    if (phrase.match(/[.,;!?"'*=+)\]-]$/g)) {
+      specialInTheEnd = phrase[phrase.length - 1].slice();
       phrase = phrase.slice(0, phrase.length - 1);
-      dotInTheEnd = true;
     }
     if ((match = dictionary[phrase]) !== undefined) {
-      if (dotInTheEnd) {
-        match = match + '.';
+      if (specialInTheEnd) {
+        match = match + specialInTheEnd;
       }
     }
     return match;
@@ -34,16 +34,16 @@ class Translator {
 
   matchSpelling(wordString, dictionary) {
     let phrase = wordString.slice();
-    let dotInTheEnd = false;
+    let specialInTheEnd;
     let match;
 
-    if (phrase.match(/[.]$/g)) {
+    if (phrase.match(/[.,;!?"'*=+)\]-]$/g)) {
+      specialInTheEnd = phrase[phrase.length - 1].slice();
       phrase = phrase.slice(0, phrase.length - 1);
-      dotInTheEnd = true;
     }
     if ((match = dictionary[phrase]) !== undefined) {
-      if (dotInTheEnd) {
-        match = match + '.';
+      if (specialInTheEnd) {
+        match = match + specialInTheEnd;
       }
     }
     return match;

@@ -28,7 +28,13 @@ module.exports = function (app) {
         return res.json({ error: text });
       }
 
-      let formattedText = translation.text;
+      console.log({
+        locale: locale,
+        text: text,
+        translation: translation.text
+      });
+
+      let formattedText = translation.text.slice();
       translation.translatedWords.forEach(word => {
         formattedText = formattedText
           .replaceAll(word, `<span class='highlight'>${word}</span>`);
@@ -43,14 +49,6 @@ module.exports = function (app) {
           .concat(formattedTextWords.slice(1))
           .join(' ');
       }
-
-
-      console.log({
-        locale: locale,
-        text: text,
-        translation: translation.text,
-        formatted: formattedText
-      });
 
       res.json({
         text: translation.text,
