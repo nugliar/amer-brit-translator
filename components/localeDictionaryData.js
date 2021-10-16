@@ -34,4 +34,17 @@ const localeDictionaryData = {
   }
 }
 
+Object.keys(localeDictionaryData)
+  .map(localeKey => Object.keys(localeDictionaryData[localeKey])
+    .forEach(dataKey => {
+      const data = localeDictionaryData[localeKey][dataKey];
+      const phrases = data.options.inverted ?
+        Object.values(data.dictionary) :
+        Object.keys(data.dictionary)
+
+      data.maxWordSeqLength = Math.max(...phrases.map(phrase =>
+        phrase.split(' ').length));
+    })
+  )
+
 module.exports = localeDictionaryData;
